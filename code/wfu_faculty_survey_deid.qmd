@@ -1,0 +1,619 @@
+---
+title: "2025 WFU Faculty Survey"
+author: "Joddy Marchesoni"
+format: html
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Preparing tables and charts
+
+## Load libraries and data
+
+```{r include=FALSE}
+# Load libraries
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+# Load the data
+load("survey.RData")
+```
+
+## Table generation functions
+
+```{r include=FALSE}
+make_table_var <- function(data, var, sort) {
+  table <- data %>% filter(!is.na(var)) %>% group_by(var) %>% summarize(total=n())
+  if(sort) {
+    table <- table %>% arrange(var)
+  }
+}
+
+make_table <- function(data, q, sort) {
+  table <- data %>% filter(question == q) %>% group_by(question,item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+  if(sort) {
+    table <- table %>% arrange(desc(total))
+  }
+}
+```
+
+## Generate results summary tables
+
+```{r include=FALSE}
+# Generate summaries for result tables
+t_finished <- quant_survey %>% filter(!is.na(finished)) %>% group_by(finished) %>% summarize(total=n())
+t_finished$finished <- c("Incomplete", "Complete")
+t_finished <- t_finished %>% arrange(desc(total))
+
+t_faculty_body <- quant_survey %>% filter(!is.na(faculty.body)) %>% group_by(faculty.body) %>% summarize(total=n())
+t_faculty_body <- t_faculty_body %>% arrange(faculty.body)
+
+t_faculty_position <- quant_survey %>% filter(!is.na(faculty.position)) %>% group_by(faculty.position) %>% summarize(total=n())
+t_faculty_position <- t_faculty_position %>% arrange(desc(total))
+
+t_faculty_served <- quant_survey %>% filter(!is.na(faculty.served)) %>% group_by(faculty.served) %>% summarize(total=n())
+
+t_research_types <- plot_survey %>% filter(question == "research") %>% group_by(question,item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_research_types <- t_research_types %>% arrange(desc(total))
+
+t_research_types_other <- qual_survey_long %>% filter(question == "research_type_other") %>% select(-question) %>% arrange(response)
+
+t_tools <- plot_survey %>% filter(question == "tools") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_tools <- t_tools %>% arrange(desc(total))
+
+t_tools_other <- qual_survey_long %>% filter(question == "tools_other") %>% select(-question) %>% arrange(response)
+
+t_collect <- plot_survey %>% filter(question == "collect") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_collect <- t_collect %>% arrange(desc(total))
+
+t_collect_other <- qual_survey_long %>% filter(question == "collect_other") %>% select(-question) %>% arrange(response)
+
+t_create <- plot_survey %>% filter(question == "create") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_create <- t_create %>% arrange(desc(total))
+
+t_create_other <- qual_survey_long %>% filter(question == "create_other") %>% select(-question) %>% arrange(response)
+
+t_store <- plot_survey %>% filter(question == "store") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_store <- t_store %>% arrange(desc(total))
+
+t_store_other <- qual_survey_long %>% filter(question == "store_other") %>% select(-question) %>% arrange(response)
+
+t_funders_require_dmp <- quant_survey %>% filter(!is.na(funders.require_dmp)) %>% group_by(funders.require_dmp) %>% summarize(total=n())
+
+t_funders_require_dmp_other <- qual_survey_long %>% filter(question == "dmsp_required_not_sure") %>% select(-question) %>% arrange(response)
+
+t_funding <- plot_survey %>% filter(question == "funding") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_funding <- t_funding %>% arrange(desc(total))
+
+t_funding_other <- qual_survey_long %>% filter(question == "funding_type_other") %>% select(-question) %>% arrange(response)
+
+t_submit_repo <- quant_survey %>% filter(!is.na(submit.repo)) %>% group_by(submit.repo) %>% summarize(total=n())
+
+t_submit_repo_other <- qual_survey_long %>% filter(question == "submit_repo_other") %>% select(-question) %>% arrange(response)
+
+t_repo <- plot_survey %>% filter(question == "repo") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_repo <- t_repo %>% arrange(desc(total))
+
+# t_repo_other <- qual_survey_long %>% filter(question == "repos_other") %>% select(-question) %>% arrange(response)
+
+t_concerns <- plot_survey %>% filter(question == "concerns") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_concerns <- t_concerns %>% arrange(desc(total))
+
+t_concerns_other <- qual_survey_long %>% filter(question == "concerns_other") %>% select(-question) %>% arrange(response)
+
+t_proc <- plot_survey %>% filter(question == "proc") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_proc <- t_proc %>% arrange(desc(total))
+
+t_proc_other <- qual_survey_long %>% filter(question == "proc_other") %>% select(-question) %>% arrange(response)
+
+t_resources <- plot_survey %>% filter(question == "resources") %>% group_by(question, item) %>% summarize(total = n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_resources <- t_resources %>% arrange(desc(total))
+
+t_resources_other <- qual_survey_long %>% filter(question == "resources_other") %>% select(-question) %>% arrange(response)
+
+t_lib <- plot_survey %>% filter(question == "lib") %>% group_by(question, item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_lib <- t_lib %>% arrange(desc(total))
+
+t_lib_other <- qual_survey_long %>% filter(question == "lib_other") %>% select(-question) %>% arrange(response)
+
+t_workshops <- plot_survey %>% filter(question == "workshops") %>% group_by(question, item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+t_workshops <- t_workshops %>% arrange(desc(total))
+
+t_workshops_other <- qual_survey_long %>% filter(question == "workshops_other") %>% select(-question) %>% arrange(response)
+
+t_w_timing <- plot_survey %>% filter(question == "w_timing") %>% group_by(question, item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+
+t_w_timing_other <- qual_survey_long %>% filter(question == "workshop_timing_other") %>% select(-question) %>% arrange(response)
+
+t_w_time_day <- plot_survey %>% filter(question == "w_time_day") %>% group_by(question, item) %>% summarize(total=n()) %>% type.convert(as.is=TRUE) %>% ungroup() %>% select(-question)
+
+t_workshop_modality <- quant_survey %>% filter(!is.na(workshop.modality)) %>% group_by(workshop.modality) %>% summarize(total=n())
+
+# t_prevented_attending_w <- qual_survey_long %>% filter(question == "prevented_attending_w") %>% select(-question) %>% arrange(response)
+
+# t_additional_comments <- qual_survey_long %>% filter(question == "additional_comments") %>% select(-question) %>% arrange(response)
+
+# t_new_developments <- qual_survey_long %>% filter(question == "new_developments") %>% select(-question) %>% arrange(response)
+```
+
+## Load qualitative data
+
+```{r echo=FALSE}
+library(readxl)
+
+# Load in the qualitative software table for other software
+tools_other <- read_xlsx("qual_software_tools.xlsx")
+
+# Load in the other qual codes
+quals <- read_xlsx("free_response_data.xlsx")
+highlights <- read_xlsx("highlights.xlsx")
+
+prevented_workshop <- quals %>% filter(Question == "what prevented you from attending a workshop") %>% select(-Question) %>% rename( item = "Code", total = "Frequency") %>% arrange(desc(total))
+funding_agencies <- quals %>% filter(Question == "funding agencies") %>% select(-Question) %>% rename( item = "Code", total = "Frequency") %>% arrange(desc(total))
+repo_other <- quals %>% filter(Question == "repositories") %>% select(-Question) %>% rename( item = "Code", total = "Frequency") %>% arrange(desc(total))
+
+
+new_developments <- highlights %>% filter(question == "new_developments") %>% select(-question)
+additional_comments <- highlights %>% filter(question == "additional_comments") %>% select(-question)
+```
+
+## Prepare tools data
+
+```{r echo=FALSE}
+if(!is.null(tools_other$`Software Tools`)) {
+  tools_other <- tools_other %>% rename( item = "Software Tools", total = "Frequency")
+}
+
+# Combine it with the main tools table and add category column
+t_tools_all <- rbind(t_tools, tools_other)
+t_tools_all <- t_tools_all %>% slice(-14)
+
+categories <- data.frame(category = c("Productivity",
+"Productivity",
+"Data storage",
+"Multimedia",
+"Writing and lit review",
+"AI tools",
+"Data storage",
+"Surveys",
+"Programming",
+"Writing and lit review",
+"Programming",
+"Collaboration",
+"Data analysis",
+"Qualitative analysis",
+"Data analysis",
+"Data analysis",
+"GIS",
+"Qualitative analysis",
+"Collaboration",
+"Programming",
+"Mathematics",
+"Mathematics",
+"Writing and lit review",
+"Data analysis",
+"Multimedia",
+"Productivity",
+"Data analysis",
+"Multimedia",
+"Data analysis",
+"Programming",
+"Writing and lit review",
+"Writing and lit review",
+"Multimedia",
+"Multimedia",
+"Multimedia",
+"Programming",
+"Data storage",
+"Programming",
+"Multimedia",
+"Data analysis",
+"Multimedia",
+"Data analysis",
+"Writing and lit review",
+"Data analysis",
+"Data analysis",
+"Data analysis",
+"Data analysis",
+"Surveys",
+"Writing and lit review",
+"Qualitative analysis",
+"Mathematics",
+"Writing and lit review",
+"Data analysis",
+"Data analysis",
+"Programming",
+"Data analysis",
+"Data analysis",
+"Multimedia",
+"Data analysis",
+"Data storage"))
+
+# Reduce the responses down to a small number of categories by adding a column and then summarizing
+t_tools_all <- cbind(t_tools_all, categories)
+t_tools_all$category <- as.factor(t_tools_all$category)
+t_tools_all <- t_tools_all %>% rename(item = "category", tools = "item")
+
+t_tools_categories <- t_tools_all %>% group_by(item) %>% summarize(total = sum(total), tools = str_c(tools, collapse = ", ")) %>% type.convert(as.is=TRUE) %>% ungroup()
+t_tools_categories <- t_tools_categories %>% arrange(desc(total))
+
+```
+
+## Make remaining qualitative summary tables
+
+```{r echo=FALSE}
+# Making the other qual tables
+t_additional_comments <- additional_comments
+t_funding_agencies <- funding_agencies
+t_new_developments <- new_developments
+t_prevented_attending_w <- prevented_workshop
+t_repo_other <- repo_other
+```
+
+## Table and chart functions
+
+```{r echo=FALSE}
+# Load the table libraries
+library(gt)
+library(gtExtras)
+library(treemapify)
+library(forcats)
+
+# Set visualization variables
+style_colors <- scale_fill_brewer(palette = "Set3")
+no_color <- scale_fill_manual(values = rep("#bc80bd", 50))
+no_grid <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+text_size <- theme(text=element_text(size=16))
+
+# Functions for visualization
+tablifier <- function(table, title) {
+  table %>% gt() %>% tab_header(title = title) %>% tab_options(table.align = "left", column_labels.hidden = TRUE, table.font.size = 16) %>% cols_align(align = "left")
+}
+
+tablifier_bar <- function(table, title, col) {
+  col <- enquo(col)
+  bar <- table %>% select(!!col)
+  table %>% gt() %>% tab_header(title = title) %>% tab_options(table.align = "left", column_labels.hidden = TRUE, table.font.size = 16) %>% cols_align(align = "left") %>% gt_plt_bar(column = !!bar, keep_column = TRUE, color = "#bc80bd", width=60)
+}
+
+treemapifier <- function(data, label) {
+  data %>% ggplot(aes(area=total, fill=item, label=item)) +
+  geom_treemap() +
+  geom_treemap_text() +
+  labs(fill = label) +
+  text_size +
+  style_colors
+}
+
+treemapifier_v <- function(data, var, label) {
+  data %>% ggplot(aes(area=total, fill=var, label=var)) +
+  geom_treemap() +
+  geom_treemap_text() +
+  labs(fill = label) +
+  text_size +
+  style_colors
+}
+
+bar_charter <- function(data, label, color) {
+  data %>% mutate(reorder = fct_reorder(item, total)) %>% ggplot(aes(x=reorder, y=total, fill=reorder)) +
+  geom_col(show.legend=FALSE) +
+  labs(title = NULL,
+       x = NULL,
+       y = NULL) + 
+  theme_minimal() +
+  text_size +
+  color +
+  no_grid +
+  coord_flip()
+}
+
+bar_charter_v <- function(data, label, color, var) {
+  data %>% mutate(reorder = fct_reorder(var, total)) %>% ggplot(aes(x=reorder, y=total, fill=reorder)) +
+  geom_col(show.legend=FALSE) +
+  labs(title = NULL,
+       x = NULL,
+       y = NULL) + 
+  theme_minimal() +
+  text_size +
+  color +
+  no_grid +
+  coord_flip()
+}
+```
+
+# Faculty Survey Results
+
+## Demographics
+
+```{r echo=FALSE}
+tablifier(t_finished, "Complete responses")
+```
+
+```{r echo=FALSE}
+bar_charter_v(t_finished, "Complete responses", style_colors, t_finished$finished)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_faculty_body, "Faculty body")
+# tablifier_bar(t_faculty_body, "Faculty body", t_faculty_body$total)
+treemapifier_v(t_faculty_body, t_faculty_body$faculty.body, "Faculty body")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_faculty_position, "Faculty position")
+treemapifier_v(t_faculty_position, t_faculty_position$faculty.position, "Faculty position")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_faculty_served, "Years served as Wake faculty")
+bar_charter_v(t_faculty_served, "Years served as Wake faculty", style_colors, t_faculty_served$faculty.served)
+```
+
+------------------------------------------------------------------------
+
+## Conducting Research
+
+```{r echo=FALSE}
+tablifier(t_research_types, "What broad type of research do you conduct?")
+treemapifier(t_research_types, "Research type")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+# Decided to combine qual and quant data for this question into one
+# tablifier(t_tools, "What digital tools or software do you use in your research?")
+# bar_charter(t_tools, "Research tool", no_color)
+# tablifier(t_tools_other, "Other tools used")
+```
+
+```{r echo=FALSE}
+tablifier(t_tools_categories, "What digital tools or software do you use in your research?")
+# bar_charter(t_tools_categories, "Research tool", style_colors)
+treemapifier(t_tools_categories, "Software usage")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_collect, "What type of data do you collect?")
+treemapifier(t_collect, "Data type collected")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_create, "What files do you create while conducting your research?")
+treemapifier(t_create, "File type created")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_store, "Where do you store your research project files?")
+bar_charter(t_store, "Data storage platform", no_color)
+```
+
+------------------------------------------------------------------------
+
+## Funding and Repositories
+
+```{r echo=FALSE}
+tablifier(t_submit_repo, "Have you ever submitted your data to a repository?")
+# treemapifier_v(t_submit_repo, t_submit_repo$submit.repo, "Submitted to repository")
+bar_charter_v(t_submit_repo, "Have you ever submitted your data to a repository?", style_colors, t_submit_repo$submit.repo)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_funding, "What types of research funding have you received?")
+treemapifier(t_funding, "Research funding type received")
+tablifier(t_funding_agencies, "Agencies for federally-funded research")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_funders_require_dmp, "Do any of your current funders require a Data Management and Sharing Plan?")
+bar_charter_v(t_funders_require_dmp, "Data Management and Sharing Plan required", style_colors, t_funders_require_dmp$funders.require_dmp)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_repo, "To which repositories did you submit your data?")
+treemapifier(t_repo, "Repositories used")
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_resources, "Which resources have you used to complete your DMSP?")
+bar_charter(t_resources, "Resources used to complete DMSP", color=style_colors)
+```
+
+------------------------------------------------------------------------
+
+## Research Support
+
+```{r echo=FALSE}
+tablifier(t_concerns, "What concerns do you have about managing and preserving your digital research materials?")
+bar_charter(t_concerns, "Concern about managing and preserving research materials", style_colors)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_proc, "Which elements of the research process do you find most challenging?")
+bar_charter(t_proc, "Most challenging element of research process", no_color)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_lib, "Which ZSR library services have you used to support your research?")
+bar_charter(t_lib, "ZSR library services used", style_colors)
+```
+
+------------------------------------------------------------------------
+
+## Workshops
+
+```{r echo=FALSE}
+tablifier(t_workshops, "Which workshops would you be most likely to attend?")
+bar_charter(t_workshops, "Interest in workshop", no_color)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_w_timing, "What is your ideal timing for workshops?")
+bar_charter(t_w_timing, "Workshop timing", style_colors)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_w_time_day, "At which point during the day are you most likely to attend a library workshop?")
+bar_charter(t_w_time_day, "Workshop time of day", style_colors)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_workshop_modality, "Would you prefer in-person or virtual workshops?")
+bar_charter_v(t_workshop_modality, "In-person or virtual workshop", style_colors, t_workshop_modality$workshop.modality)
+```
+
+------------------------------------------------------------------------
+
+```{r echo=FALSE}
+tablifier(t_prevented_attending_w, "What has prevented you from attending workshops in the past?")
+```
+
+------------------------------------------------------------------------
+
+## New developments
+
+**I. Enhanced Access to Digital Resources & Tools:**
+
+- **Performing Arts:** A strong demand exists for institutional subscriptions to high-quality streaming services for live theatre and dance, similar to "Digital Theatre plus" and "National Theatre at Home."
+
+- **Research Databases & Journals:** Faculty in Finance and Economics specifically request access to more leading journals and relevant databases, as well as economics blogs (e.g., on Substack).
+
+- **Archival Access:** There's a desire for expanded access to British newspaper archives, such as The London Times and Spectator.
+
+- **Software & Platforms:** Requests include:
+
+<!-- -->
+
+- **Overleaf Premium Subscription:** To provide a university-wide license, similar to existing departmental ones.
+
+- **BioRender License:** For creating scientific figures and illustrations.
+
+- **Tableau & NVivo:** Access to data visualization and qualitative data analysis software, potentially through institutional licenses or virtual labs.
+
+- **AI Tools:** Interest in a "Plus version for ChatGPT" suggests a need for advanced AI capabilities for research and productivity.
+
+**II. Support for Digital Scholarship & Research Methodologies:**
+
+- **Digital Humanities:** This is a significant area, with requests for:
+
+<!-- -->
+
+- Training in identifying and using useful tools for text analysis, mapping, network analysis, and TEI coding.
+
+- General "Digital Humanities training."
+
+<!-- -->
+
+- **Research Workflow & Transparency:**
+
+<!-- -->
+
+- Support for **pre-registering studies** in psychology, indicating a move towards more transparent and rigorous research practices.
+
+- Guidance on **systematic review tools**, as the technology in this area is rapidly improving. The library could help researchers stay informed of the latest tools.
+
+<!-- -->
+
+- **Data Management & Visualization:**
+
+<!-- -->
+
+- New data visualization tools, tips, and techniques.
+
+- An introductory **GIS workshop** is explicitly requested.
+
+- Need for **enhanced cloud storage** to support research data.
+
+<!-- -->
+
+- **Transcription Services:** Programs/software that can transcribe audio files are needed across disciplines, particularly in music for score cleaning and historical document transcription, and for language transcriptions.
+
+**III. Capacity Building & Skill Development:**
+
+- Respondents express a need for support in developing skills for creating **online experiences** (courses, content presentation), including guidance on sharing and organizing digital information. This highlights a need for training and confidence-building in digital pedagogy and content creation.
+
+- The request for help with "Norwegian Art Song Anthology" (music discipline) underscores a need for specialized support in dealing with historical documents, score cleaning, and language transcriptions, indicating a broader need for discipline-specific expertise and resources within the library.
+
+## Additional comments
+
+### **Positive Feedback & Staff Recognition**
+
+\
+
+- Overwhelmingly positive sentiment; feeling "super supported" and well-served.
+
+- **Subject librarians** lauded for purchases and course support.
+
+- Specific shout-outs to **Colleen Foy, Hu, Tanya, and Kathy Shields** for exceptional help with data, archives, and purchases.
+
+- ILL (Interlibrary Loan) described as a "godsend."
+
+- Library appreciated as a productive change of pace/environment.
+
+------------------------------------------------------------------------
+
+### **Resource & Access Requests**
+
+\
+
+- **More digital content:** German newspapers, French psychology and humanities journals, deeper digital theatre and dance archives.
+
+- **Increased budget:** For books and journals.
+
+- **Physical holdings:** Desire for more physical books and greater room/access for them.
+
+- **New software/tools:** Subscription to **EndNote**, resources for **AI tools**.
+
+- **Newspaper archives:** More access, currently self-funding.
+
+------------------------------------------------------------------------
+
+### **Areas for Improvement & Collaboration**
+
+\
+
+- **Website design:** Needs to be more research-focused, less geared toward undergraduates.
+
+- **Software access/training:** Tutorials/workshops needed for existing software (e.g., MaxQDA) to increase awareness and usability; issues with MaxQDA VPN reliance and collaboration.
+
+- **Collaboration:** Work with WFU IS and CAT to capture expertise and prevent redundancy.
+
+- **Database organization:** Negative feedback on new database organization; missed easy access to encyclopedias, WorldCat, and major general databases on the homepage.
+
+- **Advocacy:** Suggestion for library involvement in academic freedom and resisting book banning.
+
+- **Facilitation:** Even if not providing services directly, act as a facilitator for finding external services.
