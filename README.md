@@ -53,7 +53,51 @@ Output
 - R data export (entire survey)
 
 ## Code files
-- faculty_survey.R
+### faculty_survey.R
+faculty_survey.R imports and processes the survey data, creating a set of
+spreadsheets for the 3 survey data types (quantitative, qualitative, contact).
+Quantitative and qualitative survey data was transformed for table and chart
+presentation. 
+The final output includes a full export of all the data in a single R data file.
+
+Output data from this code will be imported by the rendering code
+(wfu_faculty_survey_deid.qmd and the other renderers). There are multiple
+rendering targets - admin (all data), stakeholders (all data except open-ended
+responses), public (only aggregated data). This allows creating output webpages 
+for each privilege level separately from the cleaning and processing.
+
+#### Code purpose and outputs
   - handles receiving data (from spreadsheet, R data file, or Qualtrics API)
-  -  data cleaning 
-- wfu_faculty_survey_deid.qmd
+  - data cleaning
+    - rename questions to human-readable names
+    - set college division levels to human-readable
+    - recode multiple select questions to be boolean (TRUE/FALSE)
+    - transform the survey from wide format to long format (for the visualizations)
+    - qualitative cleaning - transform for MaxQDA input
+    
+### wfu_faculty_survey_deid.qmd
+
+This code is an example renderer, although it will not work without valid survey 
+data. A .qmd file is a Quarto file -- it allows the programmer to write code in 
+"chunks" and render it to a PDF, HTML file, or many other formats. I chose HTML 
+since the data would be shared internally on the ZSR web server.
+
+In the original code project, there are renderers for all three targets (admin,
+stakeholders, public). For the public version, the data was not available, so 
+the report was rendered in the original project using the public, de-identified 
+data. Then the final render was copied over to the public project. It is 
+identical to the public version without *any* individual level open-ended 
+responses. This was required to respect the survey consent level.
+
+#### Code purpose and outputs
+The code builds a report consisting of structured, formatted text, tables, and 
+charts. The code imports the processed survey data, defines functions for 
+creating tables and charts (treemap and bar), and styles the tables and charts. 
+
+The report generated from these elements includes a table and visualization for 
+every survey question, with a summary of the open-ended questions at the end. 
+The public report was used to create the public blog post, although the report 
+itself is not hosted anywhere online currently.
+
+The output is an HTML file containing the report content, and a folder for the 
+chart images. It can be uploaded to a web server and displayed in a web browser.
