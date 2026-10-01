@@ -74,6 +74,9 @@ for each privilege level separately from the cleaning and processing.
     - recode multiple select questions to be boolean (TRUE/FALSE)
     - transform the survey from wide format to long format (for the visualizations)
     - qualitative cleaning - transform for MaxQDA input
+    - contact list cleaning - de-duplicate and create human-readable columns for the contact list
+    - export all survey data to an R data file
+    - export individual datasets (quant, qual, contact list) to Excel files
     
 ### wfu_faculty_survey_deid.qmd
 
@@ -101,3 +104,39 @@ itself is not hosted anywhere online currently.
 
 The output is an HTML file containing the report content, and a folder for the 
 chart images. It can be uploaded to a web server and displayed in a web browser.
+
+## Reports
+
+The original project included a report for Admin Council, Stakeholders, and Public.
+
+### Admin Council report
+
+Contains individual-level open-ended data and aggregated quantitative data. Google 
+Docs with strategic takeaways and next steps for the research services were 
+included. I met with Admin Council and led the meeting to go over the report, 
+including answering questions and interpreting the results. This meeting served 
+to share the survey results (which had questions involving every department), as
+well as lay out my department's plan for my first year as Data Services Librarian.
+
+The consent statement for the survey included a section on sharing the responses 
+with library leadership, so we were able to respectfully share all individual 
+responses (without directly identifying any participants, since the survey was 
+anonymous).
+
+### Stakeholder report
+
+The stakeholder report was for the Provost's Office, as well as research librarians 
+and liaison librarians. It did not have the takeaways and next steps documents, 
+but had all the data from the survey. A summary section was included for the 
+open-ended responses.
+
+This report did not have consent to share individual open-ended responses, but 
+did have the "Other" responses for the tools used, repositories used, etc.
+
+### Public report
+
+The public report was not posted anywhere on the internet, but the HTML file was
+generated for it. The public reporting of the survey is on the blog, which has 
+the high-level takeaways and a few charts. A fully de-identified version of this 
+report is included in this repository in the "render" folder. It can be opened 
+in a local web browser after the project is downloaded.
