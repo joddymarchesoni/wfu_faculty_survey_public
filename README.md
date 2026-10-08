@@ -1,6 +1,8 @@
 # WFU Library Research Services Faculty Survey (Public)
 Public version of the WFU Faculty Library Research Survey project code from 2025. The original code and output is included, but the original survey data is not available.
 
+## Access the presentation online at [bit.ly/wfu-fs-pr](https://bit.ly/wfu-fs-pr)
+
 ## Purpose of the survey
 This survey was designed and implemented by the Digital Initiatives and Scholarly Communication (DISC) team at Z. Smith Reynolds Library.
 
